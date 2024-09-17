@@ -27,6 +27,11 @@ import uuid
 from codecs import (utf_8_decode as _utf_8_decode,
                     utf_8_encode as _utf_8_encode)
 
+if not hasattr(collections, 'Mapping'):
+    collections.Mapping = collections.abc.Mapping
+    collections.MutableMapping = collections.abc.MutableMapping
+    collections.Sequence = collections.abc.Sequence
+
 from bson.binary import (Binary, OLD_UUID_SUBTYPE,
                          JAVA_LEGACY, CSHARP_LEGACY,
                          UUIDLegacy)

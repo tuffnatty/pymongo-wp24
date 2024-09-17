@@ -2927,58 +2927,51 @@ static PyMethodDef _CBSONMethods[] = {
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define INITERROR return NULL
+#define INITERROR return -1;
 static int _cbson_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->Binary);
-    Py_VISIT(GETSTATE(m)->Code);
-    Py_VISIT(GETSTATE(m)->ObjectId);
-    Py_VISIT(GETSTATE(m)->DBRef);
-    Py_VISIT(GETSTATE(m)->Regex);
-    Py_VISIT(GETSTATE(m)->UUID);
-    Py_VISIT(GETSTATE(m)->Timestamp);
-    Py_VISIT(GETSTATE(m)->MinKey);
-    Py_VISIT(GETSTATE(m)->MaxKey);
-    Py_VISIT(GETSTATE(m)->UTC);
-    Py_VISIT(GETSTATE(m)->REType);
+    struct module_state *state = GETSTATE(m);
+    if (!state) {
+        return 0;
+    }
+    Py_VISIT(state->Binary);
+    Py_VISIT(state->Code);
+    Py_VISIT(state->ObjectId);
+    Py_VISIT(state->DBRef);
+    Py_VISIT(state->Regex);
+    Py_VISIT(state->UUID);
+    Py_VISIT(state->Timestamp);
+    Py_VISIT(state->MinKey);
+    Py_VISIT(state->MaxKey);
+    Py_VISIT(state->UTC);
+    Py_VISIT(state->REType);
     return 0;
 }
 
 static int _cbson_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->Binary);
-    Py_CLEAR(GETSTATE(m)->Code);
-    Py_CLEAR(GETSTATE(m)->ObjectId);
-    Py_CLEAR(GETSTATE(m)->DBRef);
-    Py_CLEAR(GETSTATE(m)->Regex);
-    Py_CLEAR(GETSTATE(m)->UUID);
-    Py_CLEAR(GETSTATE(m)->Timestamp);
-    Py_CLEAR(GETSTATE(m)->MinKey);
-    Py_CLEAR(GETSTATE(m)->MaxKey);
-    Py_CLEAR(GETSTATE(m)->UTC);
-    Py_CLEAR(GETSTATE(m)->REType);
+    struct module_state *state = GETSTATE(m);
+    if (!state) {
+        return 0;
+    }
+    Py_CLEAR(state->Binary);
+    Py_CLEAR(state->Code);
+    Py_CLEAR(state->ObjectId);
+    Py_CLEAR(state->DBRef);
+    Py_CLEAR(state->Regex);
+    Py_CLEAR(state->UUID);
+    Py_CLEAR(state->Timestamp);
+    Py_CLEAR(state->MinKey);
+    Py_CLEAR(state->MaxKey);
+    Py_CLEAR(state->UTC);
+    Py_CLEAR(state->REType);
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_cbson",
-    NULL,
-    sizeof(struct module_state),
-    _CBSONMethods,
-    NULL,
-    _cbson_traverse,
-    _cbson_clear,
-    NULL
-};
-
-PyMODINIT_FUNC
-PyInit__cbson(void)
-#else
-#define INITERROR return
-PyMODINIT_FUNC
-init_cbson(void)
-#endif
+/* Multi-phase extension module initialization code.
+ * See https://peps.python.org/pep-0489/.
+*/
+static int
+_cbson_exec(PyObject *m)
 {
-    PyObject *m;
     PyObject *c_api_object;
     static void *_cbson_API[_cbson_API_POINTER_COUNT];
 
@@ -3009,16 +3002,6 @@ init_cbson(void)
     if (c_api_object == NULL)
         INITERROR;
 
-#if PY_MAJOR_VERSION >= 3
-    m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_cbson", _CBSONMethods);
-#endif
-    if (m == NULL) {
-        Py_DECREF(c_api_object);
-        INITERROR;
-    }
-
     /* Import several python objects */
     if (_load_python_objects(m)) {
         Py_DECREF(c_api_object);
@@ -3036,7 +3019,36 @@ init_cbson(void)
         INITERROR;
     }
 
-#if PY_MAJOR_VERSION >= 3
-    return m;
+    return 0;
+}
 #endif
+
+static PyModuleDef_Slot _cbson_slots[] = {
+    {Py_mod_exec, _cbson_exec},
+#if defined(Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED)
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED},
+#endif
+#ifdef Py_GIL_DISABLED
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_cbson",
+    NULL,
+    sizeof(struct module_state),
+    _CBSONMethods,
+    _cbson_slots,
+    _cbson_traverse,
+    _cbson_clear,
+    NULL
+};
+
+PyMODINIT_FUNC
+PyInit__cbson(void)
+{
+    return PyModuleDef_Init(&moduledef);
 }

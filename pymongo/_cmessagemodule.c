@@ -172,7 +172,7 @@ static PyObject* _cbson_insert_message(PyObject* self, PyObject* args) {
     /* NOTE just using a random number as the request_id */
     int request_id = rand();
     char* collection_name = NULL;
-    int collection_name_length;
+    Py_ssize_t collection_name_length;
     PyObject* docs;
     PyObject* doc;
     PyObject* iterator;

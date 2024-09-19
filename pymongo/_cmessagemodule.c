@@ -1380,6 +1380,9 @@ init_cmessage(void)
     Py_DECREF(c_api_object);
 
 #if PY_MAJOR_VERSION >= 3
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
     return m;
 #endif
 }

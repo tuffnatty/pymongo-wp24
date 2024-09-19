@@ -3029,9 +3029,10 @@ static PyModuleDef_Slot _cbson_slots[] = {
     {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED},
 #endif
 #ifdef Py_GIL_DISABLED
-    beliberda
+    beliberda)
     {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #else
+    erunda)
 #endif
     {0, NULL},
 };

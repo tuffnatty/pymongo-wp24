@@ -2927,7 +2927,7 @@ static PyMethodDef _CBSONMethods[] = {
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define INITERROR return -1;
+#define INITERROR return NULL
 static int _cbson_traverse(PyObject *m, visitproc visit, void *arg) {
     struct module_state *state = GETSTATE(m);
     if (!state) {
@@ -2966,12 +2966,27 @@ static int _cbson_clear(PyObject *m) {
     return 0;
 }
 
-/* Multi-phase extension module initialization code.
- * See https://peps.python.org/pep-0489/.
-*/
-static int
-_cbson_exec(PyObject *m)
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_cbson",
+    NULL,
+    sizeof(struct module_state),
+    _CBSONMethods,
+    NULL,
+    _cbson_traverse,
+    _cbson_clear,
+    NULL
+};
+
+PyMODINIT_FUNC
+PyInit__cbson(void)
+#else
+#define INITERROR return
+PyMODINIT_FUNC
+init_cbson(void)
+#endif
 {
+    PyObject *m;
     PyObject *c_api_object;
     static void *_cbson_API[_cbson_API_POINTER_COUNT];
 
@@ -3002,6 +3017,16 @@ _cbson_exec(PyObject *m)
     if (c_api_object == NULL)
         INITERROR;
 
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
+    m = Py_InitModule("_cbson", _CBSONMethods);
+#endif
+    if (m == NULL) {
+        Py_DECREF(c_api_object);
+        INITERROR;
+    }
+
     /* Import several python objects */
     if (_load_python_objects(m)) {
         Py_DECREF(c_api_object);
@@ -3019,38 +3044,10 @@ _cbson_exec(PyObject *m)
         INITERROR;
     }
 
-    return 0;
-}
-#endif
-
-static PyModuleDef_Slot _cbson_slots[] = {
-    {Py_mod_exec, _cbson_exec},
-#if defined(Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED)
-    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED},
-#endif
 #ifdef Py_GIL_DISABLED
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#else
-    erunda)
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
-    {0, NULL},
-};
-
-
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_cbson",
-    NULL,
-    sizeof(struct module_state),
-    _CBSONMethods,
-    _cbson_slots,
-    _cbson_traverse,
-    _cbson_clear,
-    NULL
-};
-
-PyMODINIT_FUNC
-PyInit__cbson(void)
-{
-    return PyModuleDef_Init(&moduledef);
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#endif
 }

@@ -1763,7 +1763,7 @@ static PyObject* get_value(PyObject* self, PyObject* name, const char* buffer,
             if (options->is_raw_bson) {
                 value = PyObject_CallFunction(
                     options->document_class, BYTES_FORMAT_STRING "O",
-                    buffer + *position, size, options->options_obj);
+                    buffer + *position, (Py_ssize_t)size, options->options_obj);
                 if (!value) {
                     goto invalid;
                 }
@@ -2781,7 +2781,7 @@ static PyObject* _cbson_bson_to_dict(PyObject* self, PyObject* args) {
     /* No need to decode fields if using RawBSONDocument */
     if (options.is_raw_bson) {
         return PyObject_CallFunction(
-            options.document_class, BYTES_FORMAT_STRING "O", string, size,
+            options.document_class, BYTES_FORMAT_STRING "O", string, (Py_ssize_t)size,
             options_obj);
     }
 
@@ -2889,7 +2889,7 @@ static PyObject* _cbson_decode_all(PyObject* self, PyObject* args) {
         /* No need to decode fields if using RawBSONDocument. */
         if (options.is_raw_bson) {
             dict = PyObject_CallFunction(
-                options.document_class, BYTES_FORMAT_STRING "O", string, size,
+                options.document_class, BYTES_FORMAT_STRING "O", string, (Py_ssize_t)size,
                 options_obj);
         } else {
             dict = elements_to_dict(self, string + 4, (unsigned)size - 5, &options);
